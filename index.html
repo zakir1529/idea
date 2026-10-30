@@ -1,0 +1,1683 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zyro | Admin Inventory Management</title>
+
+    <!-- Fonts & Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css?v=29">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="apple-touch-icon" href="assets/zyro-app-badge.png">
+
+    <!-- Global Error Logger (Logged to DevTools Console without intrusive banners) -->
+    <script>
+        window.addEventListener('error', function(event) {
+            console.error('[ZYRO Error Caught]:', event.error || event.message);
+        });
+    </script>
+</head>
+
+<body>
+
+    <!-- Login Overlay -->
+    <div id="login-overlay"
+        style="position: fixed; inset: 0; background: var(--bg-main); z-index: 10000; display: flex; align-items: center; justify-content: center;">
+        <div class="glass-card"
+            style="width: 100%; max-width: 440px; padding: 4rem 3rem; text-align: center; position: relative; z-index: 2; border: 1px solid var(--glass-border);">
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 2rem; gap: 0.85rem;">
+                <div id="login-logo-box" style="width: 72px; height: 72px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--glass-border); border-radius: 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 30px rgba(0,0,0,0.4); transition: all 0.4s ease;">
+                    <img src="assets/zyro-z-white.png" alt="ZYRO" style="width: 48px; height: 48px; object-fit: contain;">
+                </div>
+                <div style="font-family: 'Outfit', sans-serif; font-size: 1.8rem; font-weight: 800; letter-spacing: 2px; color: var(--text-main);">ZYRO</div>
+            </div>
+            <h2 style="margin-bottom: 0.5rem; font-family: 'Outfit'; font-weight: 800; font-size: 2rem;">Portal Access</h2>
+            <p style="color: var(--text-muted); margin-bottom: 2.5rem;">Zyro Login</p>
+
+            <form id="login-form" autocomplete="on" method="dialog">
+                <div class="form-group" style="text-align: left; margin-bottom: 1.25rem;">
+                    <label
+                        style="text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.7rem; font-weight: 700;">Account Email</label>
+                    <input type="email" id="admin-login-email" name="username" autocomplete="username email" list="saved-emails-list" placeholder="email@zyro.online" required
+                        style="background: var(--bg-main);">
+                    <datalist id="saved-emails-list">
+                        <option value="mirzashahjahan2003@gmail.com">
+                        <option value="developer@zyro.online">
+                    </datalist>
+                </div>
+                <div class="form-group" style="text-align: left; margin-bottom: 2rem;">
+                    <label
+                        style="text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.7rem; font-weight: 700;">Password</label>
+                    <input type="password" id="admin-password" name="password" autocomplete="current-password" placeholder="••••••••" required
+                        style="background: var(--bg-main);">
+                </div>
+                <button type="submit" class="btn btn-primary"
+                    style="width: 100%; justify-content: center; height: 55px; border-radius: 16px; font-size: 1rem;">
+                    Establish Session
+                </button>
+            </form>
+            <button class="btn btn-ghost" id="forgot-pwd-btn"
+                style="margin-top: 1.5rem; font-size: 0.8rem; width: 100%; color: var(--text-muted);">
+                Credentials Recovery
+            </button>
+            <p id="login-error"
+                style="color: var(--accent-danger); font-size: 0.8rem; margin-top: 1.5rem; display: none;">
+                Verification failed. Please try again.</p>
+        </div>
+    </div>
+
+    <!-- Password Recovery Modal -->
+    <div id="recovery-overlay"
+        style="position: fixed; inset: 0; background: var(--bg-main); z-index: 10001; display: none; align-items: center; justify-content: center;">
+        <div class="glass-card"
+            style="width: 100%; max-width: 440px; padding: 4rem 3rem; text-align: center; border: 1px solid var(--glass-border);">
+            <div
+                style="width: 80px; height: 80px; background: var(--bg-card-hover); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem;">
+                <i class="fas fa-key" style="font-size: 2.5rem; color: var(--accent-primary);"></i>
+            </div>
+            <h2 style="margin-bottom: 0.5rem; font-family: 'Outfit'; font-weight: 800;">Credential Recovery</h2>
+
+            <div id="recovery-local-section">
+                <p id="recovery-q-text" style="color: var(--text-muted); margin-bottom: 2.5rem;">Loading
+                    security challenge...</p>
+                <form id="recovery-form">
+                    <div class="form-group" style="text-align: left; margin-bottom: 1.5rem;">
+                        <label
+                            style="text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.7rem; font-weight: 700;">Secret
+                            Answer</label>
+                        <input type="text" id="recovery-answer-input" placeholder="Enter answer" required
+                            style="background: var(--bg-main);">
+                    </div>
+                    <div class="form-group" style="text-align: left; margin-bottom: 2rem;">
+                        <label
+                            style="text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.7rem; font-weight: 700;">New
+                            Security Key</label>
+                        <input type="password" id="recovery-new-pwd" placeholder="Enter new password" required
+                            style="background: var(--bg-main);">
+                    </div>
+                    <div style="display: flex; gap: 1rem;">
+                        <button type="button" class="btn btn-ghost"
+                            onclick="document.getElementById('recovery-overlay').style.display='none'"
+                            style="flex: 1; border-radius: 14px; border: 1px solid var(--glass-border); color: var(--text-main);">Cancel</button>
+                        <button type="submit" class="btn btn-primary"
+                            style="flex: 2; border-radius: 14px;">Reset Key</button>
+                    </div>
+                </form>
+                <button class="btn btn-ghost"
+                    onclick="document.getElementById('recovery-local-section').style.display='none'; document.getElementById('recovery-cloud-section').style.display='block';"
+                    style="margin-top: 1.5rem; font-size: 0.8rem; width: 100%; color: #8b5cf6;">
+                    <i class="fas fa-cloud" style="margin-right: 0.5rem;"></i> Use Supabase Cloud Reset
+                </button>
+            </div>
+
+            <div id="recovery-cloud-section" style="display: none;">
+                <p style="color: var(--text-muted); margin-bottom: 2.5rem;">Send a reset link to your registered
+                    Gmail via Supabase Cloud.</p>
+                <form id="cloud-reset-form">
+                    <div class="form-group" style="text-align: left; margin-bottom: 2rem;">
+                        <label
+                            style="text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.7rem; font-weight: 700;">Admin
+                            Email</label>
+                        <input type="email" id="cloud-reset-email" placeholder="admin@example.com" required
+                            style="background: var(--bg-main);">
+                    </div>
+                    <div style="display: flex; gap: 1rem;">
+                        <button type="button" class="btn btn-ghost"
+                            onclick="document.getElementById('recovery-cloud-section').style.display='none'; document.getElementById('recovery-local-section').style.display='block';"
+                            style="flex: 1; border-radius: 14px; border: 1px solid var(--glass-border); color: var(--text-main);">Back</button>
+                        <button type="submit" class="btn btn-primary"
+                            style="flex: 2; border-radius: 14px; background: #8b5cf6; color: white; border: none;">Send
+                            Reset Link</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ledger Auth Modal -->
+    <div id="ledger-auth-overlay"
+        style="position: fixed; inset: 0; background: var(--bg-main); z-index: 20000; display: none; align-items: center; justify-content: center;">
+        <div class="glass-card"
+            style="width: 100%; max-width: 440px; padding: 4rem 3rem; text-align: center; border: 1px solid var(--glass-border);">
+            <div
+                style="width: 80px; height: 80px; background: var(--bg-card-hover); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem;">
+                <i class="fas fa-lock" style="font-size: 2.5rem; color: var(--accent-primary);"></i>
+            </div>
+            <h2 style="margin-bottom: 0.5rem; font-family: 'Outfit'; font-weight: 800;">Secure Access</h2>
+            <p style="color: var(--text-muted); margin-bottom: 2.5rem;">Supabase password verification required for sales, analytics, and ledger access</p>
+
+            <form id="ledger-auth-form">
+                <div class="form-group" style="text-align: left; margin-bottom: 2rem;">
+                    <label
+                        style="text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.7rem; font-weight: 700;">Security
+                        Key</label>
+                    <input type="password" id="ledger-password" placeholder="••••••••" required
+                        style="text-align: center; letter-spacing: 0.4rem; font-size: 1.5rem; background: var(--bg-main);">
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <button type="button" class="btn btn-ghost" onclick="window.Ledger ? Ledger.cancelAuth() : UI.showPage('inventory')"
+                        style="flex: 1; border-radius: 14px; border: 1px solid var(--glass-border); color: var(--text-main);">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="flex: 2; border-radius: 14px;">Verify
+                        Key</button>
+                </div>
+                <button type="button" class="btn btn-ghost" id="forgot-ledger-key-btn"
+                    style="margin-top: 1.5rem; font-size: 0.8rem; width: 100%; color: var(--text-muted);">
+                    Key Recovery
+                </button>
+            </form>
+            <p id="ledger-error"
+                style="color: var(--accent-danger); font-size: 0.8rem; margin-top: 1.5rem; display: none;">
+                Verification failed. Access denied.</p>
+        </div>
+    </div>
+
+    <div id="app">
+        <!-- Sidebar Navigation -->
+        <aside>
+            <div class="logo" style="justify-content: space-between; width: 100%;">
+                <div style="display: flex; align-items: center; gap: 0.85rem;">
+                    <div class="logo-icon" style="background: transparent; border: none; box-shadow: none; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; flex-shrink: 0;">
+                        <img src="assets/zyro-z-white.png?v=19" alt="ZYRO" class="logo-icon-img" style="width: 34px; height: 34px; object-fit: contain;">
+                    </div>
+                    <div class="logo-text">ZYRO</div>
+                </div>
+                <div style="display: flex; gap: 0.35rem; align-items: center;" class="sidebar-text">
+                    <button id="sidebar-fullscreen-toggle" class="btn-icon fullscreen-toggle-btn" title="Toggle Fullscreen (F11)" onclick="window.toggleFullScreen()"
+                        style="background: transparent; border: 1px solid var(--glass-border); color: var(--text-main); width: 34px; height: 34px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: var(--transition);">
+                        <i class="fas fa-expand fullscreen-toggle-icon"></i>
+                    </button>
+                    <button id="theme-toggle" class="btn-icon" title="Toggle Theme"
+                        style="background: transparent; border: 1px solid var(--glass-border); color: var(--text-main); width: 34px; height: 34px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: var(--transition);">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="sidebar-portal-switcher" style="padding: 0.5rem 0.6rem 0.75rem 0.6rem;">
+                <button id="sidebar-portal-btn" onclick="window.switchPortal()" title="Switch to Website Portal"
+                    style="width: 100%; background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(59, 130, 246, 0.15)); border: 1px solid rgba(139, 92, 246, 0.4); color: var(--text-main); padding: 0.6rem 0.85rem; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; font-size: 0.82rem; font-weight: 700; transition: var(--transition);">
+                    <span style="display: flex; align-items: center; gap: 0.55rem;">
+                        <i id="sidebar-portal-icon" class="fas fa-globe" style="color: #a855f7; font-size: 0.95rem;"></i>
+                        <span id="sidebar-portal-text">Website Portal</span>
+                    </span>
+                    <i id="sidebar-portal-arrow" class="fas fa-arrow-right" style="font-size: 0.75rem; color: #a855f7;"></i>
+                </button>
+            </div>
+
+            <nav>
+                <div class="nav-item active" data-page="dashboard">
+                    <i class="fas fa-th-large"></i>
+                    <span>Dashboard</span>
+                </div>
+                <div class="nav-item" data-page="inventory">
+                    <i class="fas fa-boxes-stacked"></i>
+                    <span>Product List</span>
+                </div>
+                <div class="nav-item" data-page="wintercollection">
+                    <i class="fas fa-snowflake"></i>
+                    <span>Winter Collection</span>
+                </div>
+                <div class="nav-item" data-page="accessories">
+                    <i class="fas fa-gem"></i>
+                    <span>Accessories</span>
+                </div>
+                <div class="nav-item" data-page="analytics">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Sales Analytics</span>
+                </div>
+                <div class="nav-item" data-page="ledger">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    <span>Admin Ledger</span>
+                </div>
+                <div class="nav-item" data-page="webtrack">
+                    <i class="fas fa-satellite-dish"></i>
+                    <span>Website Track</span>
+                </div>
+                <div class="nav-item" data-page="website" id="nav-item-website" style="display: flex;">
+                    <i class="fas fa-globe"></i>
+                    <span>Website Management</span>
+                </div>
+                <div class="nav-item" data-page="pos">
+                    <i class="fas fa-cash-register"></i>
+                    <span>Checkout</span>
+                </div>
+                <div class="nav-item" data-page="receipts">
+                    <i class="fas fa-receipt"></i>
+                    <span>Receipts Vault</span>
+                </div>
+                <div class="nav-item" data-page="settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </div>
+            </nav>
+
+            <div style="margin-top: auto; padding-top: 2rem; border-top: 1px solid var(--glass-border);">
+                <div style="display: flex; align-items: center; gap: 1rem; cursor: pointer;" id="logout-btn">
+                    <div
+                        style="width: 40px; height: 40px; border-radius: 50%; background: var(--bg-card-hover); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <i class="fas fa-sign-out-alt" style="color: var(--accent-danger);"></i>
+                    </div>
+                    <div class="sidebar-text">
+                        <div style="font-weight: 600; font-size: 0.9rem;">Logout</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">Admin Session</div>
+                    </div>
+                </div>
+
+                <div id="sync-indicator"
+                    style="margin-top: 1rem; display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; color: var(--text-muted); margin-left: 16px;">
+                    <i class="fas fa-circle" style="font-size: 0.5rem; color: var(--accent-danger); flex-shrink: 0;"></i>
+                    <span class="sidebar-text">Offline</span>
+                </div>
+                <div style="margin-top: 0.5rem; font-size: 0.7rem; color: var(--text-muted); margin-left: 16px; font-weight: bold; opacity: 0.5;">
+                    v3.2.1 | <span id="diag-prod-count">0</span> products, <span id="diag-acc-count">0</span> accessories
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <!-- Main Content Area -->
+
+        <main>
+
+
+            <!-- Dashboard Page -->
+            <div id="dashboard-page" class="page-content" style="display: none;">
+                <header class="page-header">
+                    <div>
+                        <p style="color: var(--text-muted); font-size: 0.875rem;">Premium Management,</p>
+                        <h1>Where Styles Meet Vibe</h1>
+                    </div>
+                    <div id="sync-status" class="status-indicator">
+                        <i class="fas fa-circle"></i>
+                        <span>Cloud Active</span>
+                    </div>
+                </header>
+
+                <!-- Decorative Hero Section -->
+                <div class="glass-card"
+                    style="margin-bottom: 2rem; padding: 0; overflow: hidden; height: 350px; display: flex; position: relative; background: linear-gradient(135deg, #111 0%, #000 100%);">
+                    <div
+                        style="flex: 1; padding: 4rem; display: flex; flex-direction: column; justify-content: center; z-index: 2; color: white;">
+                        <div
+                            style="width: 50px; height: 3px; background: #ffffff; margin-bottom: 1.5rem; opacity: 0.8; border-radius: 10px;">
+                        </div>
+                        <h2
+                            style="font-size: 3.5rem; line-height: 1.1; margin-bottom: 1.5rem; font-family: 'Outfit'; font-weight: 800; letter-spacing: -2px; color: #ffffff !important; text-transform: none;">
+                            Fearless Fashion,<br>Zero Limits
+                        </h2>
+                        <p
+                            style="color: rgba(255,255,255,0.7); max-width: 480px; line-height: 1.8; font-size: 1.1rem; border-left: 2px solid rgba(255,255,255,0.2); padding-left: 1.5rem; font-style: italic;">
+                            Built for those who refuse to blend in. Rule the streets in threads designed to shock the
+                            system
+                        </p>
+                        <div style="margin-top: 2.5rem; display: flex; gap: 1.5rem; align-items: center;">
+                            <button class="btn btn-primary" onclick="UI.showPage('pos')"
+                                style="padding: 1rem 2.5rem; border-radius: 14px; border: 1px solid transparent; height: 55px; justify-content: center;">
+                                <i class="fas fa-shopping-bag" style="margin-right: 0.5rem;"></i> New Sale
+                            </button>
+                            <button class="btn btn-ghost" onclick="UI.showPage('inventory')"
+                                style="border: 1px solid rgba(255,255,255,0.1); color: white !important; padding: 1rem 2.5rem; border-radius: 14px; height: 55px; justify-content: center;">
+                                <i class="fas fa-list" style="margin-right: 0.5rem;"></i> Browse List
+                            </button>
+                        </div>
+                    </div>
+
+                    <div
+                        style="flex: 1; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; padding: 2rem;">
+                        <!-- Glowing Brand Emblem Backdrop -->
+                        <div
+                            style="position: absolute; width: 280px; height: 280px; border-radius: 50%; background: #ffffff; filter: blur(100px); opacity: 0.08;">
+                        </div>
+                        <img src="assets/zyro-dashboard-white.png?v=20" alt="ZYRO Official Logo" class="dashboard-hero-logo"
+                            style="max-width: 300px; width: 75%; height: auto; object-fit: contain; z-index: 2;">
+                    </div>
+                </div>
+
+                <div class="card-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="glass-card" style="text-align: center; padding: 2.5rem;">
+                        <i class="fas fa-shield-halved"
+                            style="font-size: 2.5rem; color: var(--accent-primary); margin-bottom: 1.5rem;"></i>
+                        <h3 style="margin-bottom: 0.5rem;">Enterprise Grade</h3>
+                        <p style="font-size: 0.85rem; color: var(--text-muted);">Enterprise license active</p>
+                    </div>
+                    <div class="glass-card" style="text-align: center; padding: 2.5rem;">
+                        <i class="fas fa-cloud"
+                            style="font-size: 2.5rem; color: var(--accent-primary); margin-bottom: 1.5rem;"></i>
+                        <h3 style="margin-bottom: 0.5rem;">Cloud Core</h3>
+                        <p style="font-size: 0.85rem; color: var(--text-muted);">Real-time Supabase sync</p>
+                    </div>
+                    <div class="glass-card" style="text-align: center; padding: 2.5rem;">
+                        <i class="fas fa-fingerprint"
+                            style="font-size: 2.5rem; color: var(--accent-primary); margin-bottom: 1.5rem;"></i>
+                        <h3 style="margin-bottom: 0.5rem;">Master Secure</h3>
+                        <p style="font-size: 0.85rem; color: var(--text-muted);">Ledger data protected</p>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+                    <div class="glass-card" style="padding: 2rem;">
+                        <h3 style="margin-bottom: 1.5rem; font-family: 'Outfit';">Recent Transactions</h3>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Order ID</th>
+                                        <th>Items</th>
+                                        <th>Total</th>
+                                        <th>Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recent-sales-list">
+                                    <!-- Dynamic content -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="glass-card">
+                        <h3 style="margin-bottom: 1.5rem; font-family: 'Outfit';">Quick Actions</h3>
+                        <div style="display: flex; flex-direction: column; gap: 1rem;">
+                            <button class="btn btn-ghost" style="justify-content: flex-start; width: 100%;"
+                                onclick="UI.showPage('pos')">
+                                <i class="fas fa-shopping-cart"></i> New Sale
+                            </button>
+                            <button class="btn btn-ghost" style="justify-content: flex-start; width: 100%;"
+                                onclick="Backup.exportToCSV()">
+                                <i class="fas fa-download"></i> Export Data
+                            </button>
+                            <button class="btn btn-ghost" style="justify-content: flex-start; width: 100%;"
+                                onclick="window.print()">
+                                <i class="fas fa-file-pdf"></i> Daily Report
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inventory (Product List) Page -->
+            <div id="inventory-page" class="page-content" style="display: none;">
+                <header class="page-header">
+                    <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                        <p style="color: var(--text-muted); font-size: 0.875rem;">Premium Management</p>
+                        <h1>Store Inventory</h1>
+                    </div>
+                    <div style="display: flex; gap: 0.75rem; align-items: center;">
+                        <button class="btn btn-ghost" onclick="SupabaseManager.fetchFromSupabase(true, this)" style="border: 1px solid var(--glass-border); display: flex; align-items: center; gap: 0.5rem; height: 42px; font-size: 0.85rem; font-weight: 600; padding: 0 1rem; border-radius: 8px;">
+                            <i class="fas fa-cloud-download-alt"></i> Fetch Inventory
+                        </button>
+                        <button class="btn btn-ghost" onclick="SupabaseManager.syncWithSupabase(true, this)" style="border: 1px solid var(--glass-border); color: var(--accent-primary); display: flex; align-items: center; gap: 0.5rem; height: 42px; font-size: 0.85rem; font-weight: 600; padding: 0 1rem; border-radius: 8px;">
+                            <i class="fas fa-cloud-upload-alt"></i> Store Inventory
+                        </button>
+                        <div style="width: 200px;">
+                            <input type="search" id="inventory-search" placeholder="Search products..." style="margin: 0; height: 42px; font-size: 0.85rem; border-radius: 8px;">
+                        </div>
+                        <button class="btn btn-ghost" onclick="Backup.exportToCSV()" title="Export CSV" style="height: 42px; width: 42px; display: flex; align-items: center; justify-content: center; border-radius: 8px; border: 1px solid var(--glass-border);">
+                            <i class="fas fa-download"></i>
+                        </button>
+                    </div>
+                </header>
+
+                <div class="table-container">
+                    <table id="inventory-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 25%;">Product Info</th>
+                                <th style="width: 15%;">Type & Style</th>
+                                <th style="width: 48%;">Variants by Color (Sizes, Stock & SKUs)</th>
+                                <th style="width: 12%; text-align: right;">Sale Price</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Dynamic content (no actions) -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Winter Collection Page -->
+            <div id="wintercollection-page" class="page-content" style="display: none;">
+                <header class="page-header">
+                    <h1>Winter Collection</h1>
+                    <div style="display: flex; gap: 1rem;">
+                        <div style="width: 250px;">
+                            <input type="search" id="wintercollection-search" placeholder="Search winter collection...">
+                        </div>
+                    </div>
+                </header>
+
+                <div class="table-container">
+                    <table id="wintercollection-table">
+                        <thead>
+                            <tr>
+                                <th>Product Details</th>
+                                <th>Category / Style</th>
+                                <th colspan="3">Stock Status & Variations</th>
+                                <th style="text-align: right;">Sale Price</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Dynamic Content -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Accessories Page -->
+            <div id="accessories-page" class="page-content" style="display: none;">
+                <header class="page-header">
+                    <h1>Accessories Inventory</h1>
+                    <div style="display: flex; gap: 1rem;">
+                        <div style="width: 250px;">
+                            <input type="search" id="accessories-search" placeholder="Search accessories...">
+                        </div>
+                    </div>
+                </header>
+
+                <div class="table-container">
+                    <table id="accessories-table">
+                        <thead>
+                            <tr>
+                                <th>Accessory Info</th>
+                                <th>Type / Style</th>
+                                <th colspan="3">Stock Status & Variations</th>
+                                <th style="text-align: right;">Sale Price</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Dynamic content (no actions) -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Analytics Page -->
+            <div id="analytics-page" class="page-content" style="display: none;">
+                <header class="page-header">
+                    <div>
+                        <p style="color: var(--text-muted); font-size: 0.875rem;">Sales reporting</p>
+                        <h1>Sales Analytics</h1>
+                        <div class="analytics-channel-tabs" aria-label="Sales channel filter" style="margin-top: 0.5rem; display: inline-flex; gap: 0.35rem; padding: 0.35rem; background: var(--bg-card); border: 1px solid var(--glass-border); border-radius: 12px;">
+                            <button type="button" class="analytics-channel-tab active" data-analytics-channel="all" style="min-height: 34px; padding: 0 0.85rem; border: 0; border-radius: 8px; background: var(--btn-primary-bg); color: var(--btn-primary-text); font-weight: 700; font-size: 0.8rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; transition: var(--transition);">
+                                <i class="fas fa-layer-group"></i> All Channels
+                            </button>
+                            <button type="button" class="analytics-channel-tab" data-analytics-channel="store" style="min-height: 34px; padding: 0 0.85rem; border: 0; border-radius: 8px; background: transparent; color: var(--text-muted); font-weight: 700; font-size: 0.8rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; transition: var(--transition);">
+                                <i class="fas fa-cash-register"></i> In-Store POS
+                            </button>
+                            <button type="button" class="analytics-channel-tab" data-analytics-channel="website" style="min-height: 34px; padding: 0 0.85rem; border: 0; border-radius: 8px; background: transparent; color: var(--text-muted); font-weight: 700; font-size: 0.8rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; transition: var(--transition);">
+                                <i class="fas fa-globe" style="color: #a855f7;"></i> Website Sales
+                            </button>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+                        <div class="analytics-range-tabs" aria-label="Sales report range">
+                            <button type="button" class="analytics-range-tab active" data-analytics-range="daily">
+                                <i class="fas fa-calendar-day"></i>
+                                <span>Daily</span>
+                            </button>
+                            <button type="button" class="analytics-range-tab" data-analytics-range="weekly">
+                                <i class="fas fa-calendar-week"></i>
+                                <span>Weekly</span>
+                            </button>
+                            <button type="button" class="analytics-range-tab" data-analytics-range="monthly">
+                                <i class="fas fa-calendar-alt"></i>
+                                <span>Monthly</span>
+                            </button>
+                            <button type="button" class="analytics-range-tab" data-analytics-range="previousMonth">
+                                <i class="fas fa-calendar-minus"></i>
+                                <span>Previous</span>
+                            </button>
+                        </div>
+                        <button type="button" id="apple-picker-trigger-btn" class="apple-date-range-pill" title="Open Apple-style date wheel picker">
+                            <i class="fas fa-clock" style="color: #38bdf8; font-size: 1rem;"></i>
+                            <div class="apple-date-range-text">
+                                <span class="apple-pill-label">Period Filter</span>
+                                <strong id="apple-range-display">Today (Live)</strong>
+                            </div>
+                            <i class="fas fa-sliders-h apple-pill-arrow"></i>
+                        </button>
+                        <input type="hidden" id="analytics-date-from">
+                        <input type="hidden" id="analytics-date-to">
+
+                        <div class="analytics-report-actions">
+                            <select id="analytics-report-range" title="Choose PDF report period">
+                                <option value="daily">Today</option>
+                                <option value="custom">Selected Range</option>
+                                <option value="weekly">This Week</option>
+                                <option value="monthly">This Month</option>
+                                <option value="previousMonth">Previous Month</option>
+                            </select>
+                            <button type="button" class="btn btn-primary" id="analytics-print-pdf-btn">
+                                <i class="fas fa-file-pdf"></i> Print PDF
+                            </button>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Apple Clock Style Date Range Wheel Roller Panel -->
+                <div id="apple-clock-picker-panel" class="apple-clock-panel glass-card" style="display: none;">
+                    <div class="apple-panel-header">
+                        <div class="apple-panel-title">
+                            <i class="fas fa-stopwatch" style="color: #38bdf8;"></i>
+                            <span>Apple Date & Time Roller</span>
+                        </div>
+                        <button type="button" id="apple-picker-close-btn" class="btn-icon" style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border); border-radius: 8px; width: 32px; height: 32px; color: var(--text-muted); cursor: pointer;">✕</button>
+                    </div>
+
+                    <!-- Quick Apple Presets -->
+                    <div class="apple-presets-bar">
+                        <button type="button" class="apple-preset-chip active" data-apple-preset="today">Today</button>
+                        <button type="button" class="apple-preset-chip" data-apple-preset="yesterday">Yesterday</button>
+                        <button type="button" class="apple-preset-chip" data-apple-preset="weekly">Last 7 Days</button>
+                        <button type="button" class="apple-preset-chip" data-apple-preset="monthly">This Month</button>
+                        <button type="button" class="apple-preset-chip" data-apple-preset="previousMonth">Previous Month</button>
+                        <button type="button" class="apple-preset-chip" data-apple-preset="year">Year to Date</button>
+                    </div>
+
+                    <!-- Dual Rolling Wheel Drums: FROM ➔ TO -->
+                    <div class="apple-wheels-grid">
+                        <!-- FROM Column Card -->
+                        <div class="apple-date-column-card">
+                            <div class="apple-col-header">
+                                <span class="apple-col-label">From Date</span>
+                                <span class="apple-col-val" id="apple-from-display">Sep 01, 2026</span>
+                            </div>
+                            <div class="apple-wheels-container">
+                                <div class="apple-wheel-lens"></div>
+                                <div class="apple-wheel-drum" id="from-month-wheel" title="Scroll Month"></div>
+                                <div class="apple-wheel-drum" id="from-day-wheel" title="Scroll Day"></div>
+                                <div class="apple-wheel-drum" id="from-year-wheel" title="Scroll Year"></div>
+                            </div>
+                        </div>
+
+                        <!-- Divider Arrow -->
+                        <div class="apple-wheel-divider-arrow">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+
+                        <!-- TO Column Card -->
+                        <div class="apple-date-column-card">
+                            <div class="apple-col-header">
+                                <span class="apple-col-label">To Date</span>
+                                <span class="apple-col-val" id="apple-to-display">Sep 02, 2026</span>
+                            </div>
+                            <div class="apple-wheels-container">
+                                <div class="apple-wheel-lens"></div>
+                                <div class="apple-wheel-drum" id="to-month-wheel" title="Scroll Month"></div>
+                                <div class="apple-wheel-drum" id="to-day-wheel" title="Scroll Day"></div>
+                                <div class="apple-wheel-drum" id="to-year-wheel" title="Scroll Year"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Panel Footer -->
+                    <div class="apple-panel-footer">
+                        <div class="apple-live-badge" id="apple-picker-summary-badge">
+                            Live Sales Sync
+                        </div>
+                        <div style="display: flex; gap: 0.75rem;">
+                            <button type="button" class="btn btn-ghost" onclick="AppleClockPicker.close()" style="border-radius: 999px; padding: 0.5rem 1.25rem;">Cancel</button>
+                            <button type="button" id="apple-picker-apply-btn" class="btn btn-primary" style="border-radius: 999px; padding: 0.5rem 1.75rem; background: #0284c7; border: none; font-weight: 700;">Done</button>
+                        </div>
+                    </div>
+                </div>
+
+                <section class="analytics-summary-panel">
+                    <div class="analytics-summary-copy">
+                        <div class="analytics-kicker" id="analytics-range-label">Today</div>
+                        <h2 id="analytics-range-title">Daily Sales</h2>
+                        <p id="analytics-range-subtitle">Showing sales completed today.</p>
+                    </div>
+                    <div class="analytics-summary-metrics">
+                        <div>
+                            <span>Total Sales</span>
+                            <strong id="analytic-total-revenue">Rs. 0</strong>
+                        </div>
+                        <div>
+                            <span>Orders</span>
+                            <strong id="analytic-order-count">0</strong>
+                        </div>
+                        <div>
+                            <span>Units Sold</span>
+                            <strong id="analytic-items-sold">0</strong>
+                        </div>
+                    </div>
+                </section>
+
+
+
+                <div class="analytics-stat-grid">
+                    <div class="glass-card analytics-stat-card">
+                        <div class="stat-label">Net Profit</div>
+                        <div class="stat-value" id="analytic-total-profit" style="color: var(--accent-success);">Rs. 0</div>
+                        <div class="analytics-stat-note">Revenue after item cost</div>
+                    </div>
+                    <div class="glass-card analytics-stat-card">
+                        <div class="stat-label">Profit Margin</div>
+                        <div class="stat-value" id="analytic-margin">0%</div>
+                        <div class="analytics-stat-note">Average margin for selected range</div>
+                    </div>
+                    <div class="glass-card analytics-stat-card">
+                        <div class="stat-label">Average Order</div>
+                        <div class="stat-value" id="analytic-average-order">Rs. 0</div>
+                        <div class="analytics-stat-note">Typical bill value</div>
+                    </div>
+                    <div class="glass-card analytics-stat-card">
+                        <div class="stat-label">Low Stock Value</div>
+                        <div class="stat-value" id="analytic-loss" style="color: var(--accent-danger);">Rs. 0</div>
+                        <div class="analytics-stat-note">Cost value of low-stock inventory</div>
+                    </div>
+                </div>
+
+                <div class="analytics-insights-grid">
+                    <div class="glass-card analytics-panel">
+                        <div class="analytics-panel-header">
+                            <div>
+                                <h3>Items Sold</h3>
+                                <p>Grouped by product, color, and size</p>
+                            </div>
+                            <i class="fas fa-tshirt"></i>
+                        </div>
+                        <div id="top-sellers-list" class="analytics-list"></div>
+                    </div>
+
+                    <div class="glass-card analytics-panel">
+                        <div class="analytics-panel-header">
+                            <div>
+                                <h3>Needs Attention</h3>
+                                <p>No sales in the selected range</p>
+                            </div>
+                            <i class="fas fa-box-open"></i>
+                        </div>
+                        <div id="least-demanded-list" class="analytics-list"></div>
+                    </div>
+                </div>
+
+                <div class="analytics-detail-grid">
+                    <div class="table-container analytics-table-panel">
+                        <div class="analytics-table-header">
+                            <div>
+                                <h3>Sold Item Details</h3>
+                                <p>Every product sold in this range, including revenue and last sold date.</p>
+                            </div>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Variant</th>
+                                    <th>Qty</th>
+                                    <th>Revenue</th>
+                                    <th>Profit</th>
+                                    <th>Last Sold</th>
+                                </tr>
+                            </thead>
+                            <tbody id="detailed-item-performance"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="glass-card analytics-panel analytics-orders-panel">
+                        <div class="analytics-panel-header">
+                            <div>
+                                <h3>Sales Orders</h3>
+                                <p>Click a range to refresh this list.</p>
+                            </div>
+                            <i class="fas fa-receipt"></i>
+                        </div>
+                        <div id="analytics-orders-list" class="analytics-orders-list"></div>
+                    </div>
+                </div>
+
+                <!-- Sales & Analytics Period Benchmark Table (At Bottom) -->
+                <div class="glass-card" style="margin-top: 2.5rem; margin-bottom: 2rem; padding: 2rem;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.75rem;">
+                        <div>
+                            <h3 style="font-family: 'Outfit'; margin: 0; font-size: 1.25rem; color: var(--text-main);">Period Comparison Benchmark</h3>
+                            <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0.25rem 0 0;">Historical overview comparing Today, Yesterday, This Month, and Selected Range.</p>
+                        </div>
+                        <i class="fas fa-chart-bar" style="font-size: 1.5rem; color: var(--accent-primary); opacity: 0.8;"></i>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Period</th>
+                                    <th>Revenue</th>
+                                    <th>Orders</th>
+                                    <th>Items Sold</th>
+                                    <th>Net Profit</th>
+                                    <th>Margin</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sales-analytics-summary-body">
+                                <!-- Dynamic rows generated by analytics.js -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Admin Ledger Page -->
+            <div id="ledger-page" class="page-content" style="display: none;">
+                <header class="page-header">
+                    <div>
+                        <p style="color: var(--text-muted); font-size: 0.875rem;">Confidential</p>
+                        <h1>Master Business Ledger</h1>
+                    </div>
+                    <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                        <input id="ledger-search" type="search" placeholder="Search ledger by name, type, color or size"
+                            style="flex: 1; min-width: 240px; padding: 0.85rem 1rem; border-radius: 12px; border: 1px solid var(--glass-border); background: var(--bg-main); color: var(--text-main);">
+                        <button class="btn btn-ghost" onclick="SupabaseManager.syncWithSupabase(true, this)"
+                            style="border: 1px solid var(--glass-border); color: var(--accent-primary); transition: all 0.3s ease;">
+                            <i class="fas fa-cloud-upload-alt"></i> Manual Cloud Sync
+                        </button>
+                        <button class="btn btn-primary" id="ledger-add-stock-btn" onclick="window.openAddModal(window.Ledger ? Ledger.currentTab : 'clothing')">
+                            <i class="fas fa-plus"></i> Add Stock
+                        </button>
+                        <div style="text-align: right;">
+                            <div class="stat-label">Est. Inventory Value</div>
+                            <div id="ledger-total-value" class="stat-value" style="font-size: 1.2rem;">Rs. 0</div>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="card-grid"
+                    style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-top: 2rem; margin-bottom: 2rem;">
+                    <div class="glass-card">
+                        <div class="stat-label">Today's Revenue</div>
+                        <div class="stat-value" id="stat-today-sales" style="font-size: 1.2rem;">Rs. 0</div>
+                    </div>
+                    <div class="glass-card">
+                        <div class="stat-label">Yesterday's Sales</div>
+                        <div class="stat-value" id="stat-yesterday-sales" style="font-size: 1.2rem;">Rs. 0</div>
+                    </div>
+                    <div class="glass-card">
+                        <div class="stat-label">Most Sold (Today)</div>
+                        <div class="stat-value" id="stat-most-sold" style="font-size: 1.2rem;">-</div>
+                        <div id="stat-most-sold-qty" style="color: var(--text-muted); font-size: 0.75rem;">0 units</div>
+                    </div>
+                    <div class="glass-card">
+                        <div class="stat-label">Lifetime Revenue</div>
+                        <div class="stat-value" id="stat-revenue" style="font-size: 1.2rem;">Rs. 0</div>
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.5rem;">
+                        <button class="btn btn-ghost ledger-tab active" data-tab="clothing" onclick="Ledger.switchTab('clothing')">Clothing Inventory</button>
+                        <button class="btn btn-ghost ledger-tab" data-tab="accessories" onclick="Ledger.switchTab('accessories')">Accessories Inventory</button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width: 24%; min-width: 240px; vertical-align: middle;">Product Overview</th>
+                                    <th style="width: 76%; min-width: 820px; padding: 0.85rem 1rem;">
+                                        <div class="ledger-header-grid">
+                                            <span style="text-align: left;">Color & Size</span>
+                                            <span style="text-align: center;">SKU</span>
+                                            <span style="text-align: right;">Stock</span>
+                                            <span style="text-align: right;">Cost Price</span>
+                                            <span style="text-align: right;">Sale Price</span>
+                                            <span style="text-align: right;">Gross Margin</span>
+                                            <span style="text-align: right;">Potential</span>
+                                            <span style="text-align: center;">Actions</span>
+                                        </div>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="ledger-items-list">
+                                <!-- Dynamic Content -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Website Track Page (Read-Only Live Storefront Monitoring) -->
+            <div id="webtrack-page" class="page-content" style="display: none;">
+                <header class="page-header">
+                    <div>
+                        <p style="color: var(--text-muted); font-size: 0.875rem;">Live Storefront Monitoring (shopzyro.online)</p>
+                        <h1>Website Track</h1>
+                    </div>
+                    <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+                        <a href="https://shopzyro.online" target="_blank" class="btn btn-ghost" style="border: 1px solid var(--glass-border); color: #38bdf8; display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none;">
+                            <i class="fas fa-external-link-alt"></i> Open shopzyro.online ↗
+                        </a>
+                    </div>
+                </header>
+
+                <!-- Storefront KPI Cards -->
+                <div class="stats-grid" style="margin-bottom: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+                    <div class="glass-card" style="border-left: 4px solid var(--accent-success);">
+                        <div class="stat-label">🟢 Live on Website</div>
+                        <div class="stat-value" id="webtrack-count-live" style="font-size: 1.4rem; color: var(--accent-success);">0</div>
+                        <div style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.25rem;">Active & visible to customers</div>
+                    </div>
+                    <div class="glass-card" style="border-left: 4px solid #f59e0b;">
+                        <div class="stat-label">🟡 Hidden / Draft</div>
+                        <div class="stat-value" id="webtrack-count-draft" style="font-size: 1.4rem; color: #f59e0b;">0</div>
+                        <div style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.25rem;">On site but hidden from buyers</div>
+                    </div>
+                    <div class="glass-card" style="border-left: 4px solid #64748b;">
+                        <div class="stat-label">⚪ Not on Website</div>
+                        <div class="stat-value" id="webtrack-count-unpublished" style="font-size: 1.4rem; color: var(--text-muted);">0</div>
+                        <div style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.25rem;">Physical warehouse only</div>
+                    </div>
+                    <div class="glass-card" style="border-left: 4px solid var(--accent-danger);">
+                        <div class="stat-label">⚠️ Out of Stock Online</div>
+                        <div class="stat-value" id="webtrack-count-outofstock" style="font-size: 1.4rem; color: var(--accent-danger);">0</div>
+                        <div style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.25rem;">Live products with 0 units left</div>
+                    </div>
+                </div>
+
+                <!-- Tabs & Filter Bar -->
+                <div class="glass-card" style="margin-bottom: 1.5rem; padding: 1.25rem;">
+                    <!-- Top row: Tabs & Counter -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.85rem; flex-wrap: wrap; gap: 0.75rem;">
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn btn-ghost webtrack-tab active" data-tab="clothing" onclick="WebTrackManager.switchTab('clothing')">Clothing</button>
+                            <button class="btn btn-ghost webtrack-tab" data-tab="accessories" onclick="WebTrackManager.switchTab('accessories')">Accessories</button>
+                        </div>
+                        <div id="webtrack-filter-count" style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">
+                            Showing 0 products
+                        </div>
+                    </div>
+
+                    <!-- Search & Filter Controls -->
+                    <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1.2fr auto; gap: 0.75rem; align-items: center;">
+                        <!-- Search -->
+                        <div style="position: relative;">
+                            <i class="fas fa-search" style="position: absolute; left: 0.85rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.85rem;"></i>
+                            <input id="webtrack-search" type="search" placeholder="Search product name, SKU, or category..."
+                                style="width: 100%; height: 40px; padding: 0 0.75rem 0 2.25rem; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--bg-main); color: var(--text-main); font-size: 0.85rem;"
+                                oninput="WebTrackManager.render()" onsearch="WebTrackManager.render()">
+                        </div>
+
+                        <!-- Status Filter -->
+                        <div>
+                            <select id="webtrack-filter-status" onchange="WebTrackManager.render()"
+                                style="width: 100%; height: 40px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--bg-main); color: var(--text-main); padding: 0 0.65rem; font-size: 0.82rem;">
+                                <option value="all">🌐 All Statuses</option>
+                                <option value="live">🟢 Live on Website</option>
+                                <option value="draft">🟡 Hidden / Draft</option>
+                                <option value="unpublished">⚪ Not on Website</option>
+                                <option value="outofstock">⚠️ Live & Out of Stock</option>
+                            </select>
+                        </div>
+
+                        <!-- Category Filter -->
+                        <div>
+                            <select id="webtrack-filter-category" onchange="WebTrackManager.render()"
+                                style="width: 100%; height: 40px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--bg-main); color: var(--text-main); padding: 0 0.65rem; font-size: 0.82rem;">
+                                <option value="all">📂 All Categories</option>
+                            </select>
+                        </div>
+
+                        <!-- Sort By -->
+                        <div>
+                            <select id="webtrack-sort-by" onchange="WebTrackManager.render()"
+                                style="width: 100%; height: 40px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--bg-main); color: var(--text-main); padding: 0 0.65rem; font-size: 0.82rem;">
+                                <option value="name-asc">Sort: Name (A → Z)</option>
+                                <option value="name-desc">Sort: Name (Z → A)</option>
+                                <option value="stock-desc">Sort: Stock (High → Low)</option>
+                                <option value="stock-asc">Sort: Stock (Low → High)</option>
+                                <option value="price-desc">Sort: Price (High → Low)</option>
+                                <option value="price-asc">Sort: Price (Low → High)</option>
+                            </select>
+                        </div>
+
+                        <!-- Reset -->
+                        <div>
+                            <button class="btn btn-ghost" onclick="WebTrackManager.resetFilters()" title="Reset Filters"
+                                style="height: 40px; padding: 0 0.75rem; border-radius: 8px; border: 1px solid var(--glass-border); color: var(--text-muted); display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.82rem; white-space: nowrap;">
+                                <i class="fas fa-undo"></i> Reset
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Read-Only Tracking Table -->
+                <div class="glass-card">
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width: 32%;">Product & Store Category</th>
+                                    <th style="width: 18%;">Website Status & Stock</th>
+                                    <th style="width: 18%;">Online Price</th>
+                                    <th style="width: 20%;">Variations & Stock</th>
+                                    <th style="width: 12%; text-align: right;">Storefront Link</th>
+                                </tr>
+                            </thead>
+                            <tbody id="webtrack-items-list">
+                                <!-- Populated dynamically by WebTrackManager -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Website Management Page -->
+            <div id="website-page" class="page-content" style="display: none;">
+                <header class="page-header">
+                    <div>
+                        <p style="color: var(--text-muted); font-size: 0.875rem;">WooCommerce Synchronization</p>
+                        <h1>Website Management</h1>
+                    </div>
+                    <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+                        <a href="https://shopzyro.online" target="_blank" class="btn btn-ghost" style="border: 1px solid var(--glass-border); color: var(--accent-primary); display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none;">
+                            <i class="fas fa-external-link-alt"></i> Visit Store
+                        </a>
+                        <button class="btn btn-ghost" onclick="WebsiteManager.scrollToDetails()" style="border: 1px solid var(--glass-border); color: #a855f7; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.85rem;">
+                            <i class="fas fa-info-circle"></i> Storefront Details
+                        </button>
+                        <button class="btn btn-primary" onclick="WebsiteManager.pushAllToWoo(this)" style="background: linear-gradient(135deg, #7c3aed, #9333ea); border: none; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-cloud-upload-alt"></i> Push All to Website
+                        </button>
+                    </div>
+                </header>
+
+                <!-- Tabs, Filters, Search & Sort Toolbar -->
+                <div class="glass-card" style="margin-bottom: 1.5rem; padding: 1.25rem;">
+                    <!-- Top row: Tabs and Active Counter -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.85rem; flex-wrap: wrap; gap: 0.75rem;">
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <button class="btn btn-ghost website-tab active" data-tab="clothing" onclick="WebsiteManager.switchTab('clothing')">Clothing Inventory</button>
+                            <button class="btn btn-ghost website-tab" data-tab="accessories" onclick="WebsiteManager.switchTab('accessories')">Accessories</button>
+                            <button class="btn btn-ghost website-tab" data-tab="sales" onclick="WebsiteManager.switchTab('sales')" style="border-color: rgba(168, 85, 247, 0.4);">
+                                <i class="fas fa-shopping-bag" style="color: #a855f7; margin-right: 0.35rem;"></i> Website Orders & Returns
+                            </button>
+                        </div>
+                        <div id="website-filter-count" style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">
+                            Showing 0 products
+                        </div>
+                    </div>
+
+                    <!-- Catalog View (Clothing & Accessories) -->
+                    <div id="website-catalog-view">
+                        <!-- Filter & Sort controls row -->
+                        <div style="display: grid; grid-template-columns: 2fr 1.1fr 1.1fr 1.1fr 1.2fr auto; gap: 0.75rem; align-items: center; margin-bottom: 1.25rem;">
+                            <!-- Search -->
+                            <div style="position: relative;">
+                                <i class="fas fa-search" style="position: absolute; left: 0.95rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.85rem; pointer-events: none;"></i>
+                                <input id="website-search" class="website-search-input" type="search" placeholder="Search by name, SKU, color, tag..."
+                                    oninput="WebsiteManager.handleFilterChange()" onsearch="WebsiteManager.handleFilterChange()">
+                            </div>
+
+                            <!-- Status Filter -->
+                            <div>
+                                <select id="website-filter-status" class="website-filter-select" onchange="WebsiteManager.handleFilterChange()">
+                                    <option value="all">🌐 All Statuses</option>
+                                    <option value="live">🟢 Active (Live)</option>
+                                    <option value="draft">🔴 Non-Active (Draft)</option>
+                                    <option value="unpublished">⚪ Unpublished</option>
+                                </select>
+                            </div>
+
+                            <!-- Category Filter -->
+                            <div>
+                                <select id="website-filter-category" class="website-filter-select" onchange="WebsiteManager.handleFilterChange()">
+                                    <option value="all">📂 All Categories</option>
+                                </select>
+                            </div>
+
+                            <!-- Stock / Sale Filter -->
+                            <div>
+                                <select id="website-filter-stock" class="website-filter-select" onchange="WebsiteManager.handleFilterChange()">
+                                    <option value="all">📦 All Stock</option>
+                                    <option value="sale">🔥 On Sale Only</option>
+                                    <option value="instock">✅ In Stock (&gt; 0)</option>
+                                    <option value="outofstock">❌ Out of Stock (0)</option>
+                                </select>
+                            </div>
+
+                            <!-- Sort By -->
+                            <div>
+                                <select id="website-sort-by" class="website-filter-select" onchange="WebsiteManager.handleFilterChange()">
+                                    <option value="name-asc">Sort: Name (A → Z)</option>
+                                    <option value="name-desc">Sort: Name (Z → A)</option>
+                                    <option value="stock-desc">Sort: Stock (High → Low)</option>
+                                    <option value="stock-asc">Sort: Stock (Low → High)</option>
+                                    <option value="price-desc">Sort: Price (High → Low)</option>
+                                    <option value="price-asc">Sort: Price (Low → High)</option>
+                                </select>
+                            </div>
+
+                            <!-- Reset -->
+                            <div>
+                                <button class="btn btn-ghost" onclick="WebsiteManager.resetFilters()" title="Reset Filters"
+                                    style="height: 42px; padding: 0 1rem; border-radius: 12px; border: 1px solid var(--glass-border); color: var(--text-muted); display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; font-weight: 600; white-space: nowrap;">
+                                    <i class="fas fa-undo"></i> Reset
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="glass-card" style="margin-bottom: 0; padding: 0; border: none; background: transparent;">
+                            <div class="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 280px;">Product & Collection</th>
+                                            <th>Color & Size Variations (SKU & Stock)</th>
+                                            <th style="text-align: right; width: 190px;">Website Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="website-items-list">
+                                        <!-- Dynamic Content from WebsiteManager -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Website Orders & Returns View -->
+                    <div id="website-sales-view" style="display: none;">
+                        <!-- Online KPIs -->
+                        <div class="stats-grid" style="margin-bottom: 1.25rem;">
+                            <div class="glass-card" style="background: var(--bg-card-hover); border: 1px solid var(--glass-border); padding: 1.25rem; border-radius: 18px;">
+                                <div class="stat-label">Online Revenue</div>
+                                <div class="stat-value" id="website-kpi-revenue" style="font-size: 1.45rem; font-weight: 800; color: #a855f7;">Rs. 0</div>
+                                <div style="color: var(--text-muted); font-size: 0.76rem; margin-top: 0.25rem;">Gross sales from shopzyro.online</div>
+                            </div>
+                            <div class="glass-card" style="background: var(--bg-card-hover); border: 1px solid var(--glass-border); padding: 1.25rem; border-radius: 18px;">
+                                <div class="stat-label">Online Orders</div>
+                                <div class="stat-value" id="website-kpi-orders" style="font-size: 1.45rem; font-weight: 800; color: var(--text-main);">0</div>
+                                <div style="color: var(--text-muted); font-size: 0.76rem; margin-top: 0.25rem;">Total processed web orders</div>
+                            </div>
+                            <div class="glass-card" style="background: var(--bg-card-hover); border: 1px solid var(--glass-border); padding: 1.25rem; border-radius: 18px;">
+                                <div class="stat-label">Units Sold Online</div>
+                                <div class="stat-value" id="website-kpi-units" style="font-size: 1.45rem; font-weight: 800; color: var(--accent-success);">0</div>
+                                <div style="color: var(--text-muted); font-size: 0.76rem; margin-top: 0.25rem;">Total product quantities ordered</div>
+                            </div>
+                            <div class="glass-card" style="background: var(--bg-card-hover); border: 1px solid var(--glass-border); padding: 1.25rem; border-radius: 18px;">
+                                <div class="stat-label">Restocked Returns</div>
+                                <div class="stat-value" id="website-kpi-returns" style="font-size: 1.45rem; font-weight: 800; color: #f59e0b;">0</div>
+                                <div style="color: var(--text-muted); font-size: 0.76rem; margin-top: 0.25rem;">Orders with returns processed</div>
+                            </div>
+                        </div>
+
+                        <!-- Search & Filter Controls -->
+                        <div style="display: grid; grid-template-columns: 2fr 1.2fr 1.2fr auto; gap: 0.75rem; align-items: center; margin-bottom: 1.25rem;">
+                            <div style="position: relative;">
+                                <i class="fas fa-search" style="position: absolute; left: 0.95rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.85rem; pointer-events: none;"></i>
+                                <input id="website-sales-search" class="website-search-input" type="search" placeholder="Search by Order #, customer name, phone, SKU..."
+                                    oninput="WebsiteManager.handleSalesFilterChange()" onsearch="WebsiteManager.handleSalesFilterChange()">
+                            </div>
+                            <div>
+                                <select id="website-sales-status-filter" class="website-filter-select" onchange="WebsiteManager.handleSalesFilterChange()">
+                                    <option value="all">📦 All Order Statuses</option>
+                                    <option value="processing">⏳ Processing</option>
+                                    <option value="completed">✅ Completed</option>
+                                    <option value="cancelled">❌ Cancelled</option>
+                                    <option value="returned">↩️ Returned</option>
+                                </select>
+                            </div>
+                            <div>
+                                <select id="website-sales-return-filter" class="website-filter-select" onchange="WebsiteManager.handleSalesFilterChange()">
+                                    <option value="all">🔄 All Return Statuses</option>
+                                    <option value="none">🟢 No Returns</option>
+                                    <option value="returned">↩️ Returned / Partial</option>
+                                </select>
+                            </div>
+                            <div>
+                                <button class="btn btn-ghost" onclick="WebsiteManager.resetSalesFilters()" title="Reset Filters"
+                                    style="height: 42px; padding: 0 1rem; border-radius: 12px; border: 1px solid var(--glass-border); color: var(--text-muted); display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; font-weight: 600; white-space: nowrap;">
+                                    <i class="fas fa-undo"></i> Reset
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Orders Table -->
+                        <div class="glass-card" style="margin-bottom: 0; padding: 0; border: none; background: transparent;">
+                            <div class="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 140px;">Order & Date</th>
+                                            <th style="width: 220px;">Customer Details</th>
+                                            <th>Items & Variations</th>
+                                            <th style="width: 140px;">Total & Payment</th>
+                                            <th style="width: 130px;">Status</th>
+                                            <th style="text-align: right; width: 150px;">Return Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="website-sales-items-list">
+                                        <!-- Populated dynamically by WebsiteManager.renderSales() -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dedicated Storefront Details Section -->
+                <div id="website-details-section" class="glass-card" style="margin-top: 2.5rem; padding: 2rem; border-radius: 24px; transition: all 0.4s ease;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.85rem; flex-wrap: wrap; gap: 0.75rem;">
+                        <div>
+                            <h3 style="font-family: 'Outfit'; margin: 0; font-size: 1.25rem; color: var(--text-main); display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fas fa-store" style="color: #a855f7;"></i> Storefront Details & Connectivity
+                            </h3>
+                            <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0.25rem 0 0;">Live WooCommerce domain, synchronization status, and online catalog overview.</p>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <a href="https://shopzyro.online" target="_blank" class="btn btn-ghost" style="border: 1px solid var(--glass-border); color: #a855f7; font-size: 0.82rem;">
+                                <i class="fas fa-external-link-alt"></i> Open shopzyro.online ↗
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid" style="margin-bottom: 0;">
+                        <div class="glass-card" style="background: var(--bg-card-hover); border: 1px solid var(--glass-border); padding: 1.5rem; border-radius: 18px;">
+                            <div class="stat-label">Store Domain</div>
+                            <div class="stat-value" style="font-size: 1.25rem; color: #a855f7; font-weight: 700;">shopzyro.online</div>
+                            <div style="color: var(--accent-success); font-size: 0.78rem; margin-top: 0.35rem; display: flex; align-items: center; gap: 0.4rem; font-weight: 600;">
+                                <i class="fas fa-circle" style="font-size: 0.5rem;"></i> WooCommerce Connected
+                            </div>
+                        </div>
+                        <div class="glass-card" style="background: var(--bg-card-hover); border: 1px solid var(--glass-border); padding: 1.5rem; border-radius: 18px;">
+                            <div class="stat-label">Total Unique Products</div>
+                            <div class="stat-value" id="website-total-products" style="font-size: 1.35rem; font-weight: 800; color: var(--text-main);">0</div>
+                            <div style="color: var(--text-muted); font-size: 0.78rem; margin-top: 0.35rem;">Catalog items grouped by style</div>
+                        </div>
+                        <div class="glass-card" style="background: var(--bg-card-hover); border: 1px solid var(--glass-border); padding: 1.5rem; border-radius: 18px;">
+                            <div class="stat-label">Total Variations & SKUs</div>
+                            <div class="stat-value" id="website-total-variants" style="font-size: 1.35rem; font-weight: 800; color: var(--text-main);">0</div>
+                            <div style="color: var(--text-muted); font-size: 0.78rem; margin-top: 0.35rem;">All active color and size variants</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- POS Page -->
+            <div id="pos-page" class="page-content" style="display: none;">
+                <header class="page-header">
+                    <h1>Checkout Terminal</h1>
+                    <div style="display: flex; gap: 1rem; flex: 1; max-width: 500px;">
+                        <input type="search" id="pos-search" placeholder="Search products..."
+                            style="background: var(--bg-card);">
+                        <select id="pos-category-filter" style="width: 140px; background: var(--bg-card);">
+                            <option value="All">All</option>
+                            <optgroup label="Clothing">
+                                <option>Round Neck</option>
+                                <option>V-Neck</option>
+                                <option>Polo</option>
+                                <option>Oversized</option>
+                                <option>Shirt</option>
+                                <option>Trouser</option>
+                                <option>Tank Top</option>
+                                <option>Shorts</option>
+                            </optgroup>
+                            <optgroup label="Accessories">
+                                <option>Watches</option>
+                                <option>Belt</option>
+                                <option>Chains</option>
+                                <option>Bracelett</option>
+                                <option>Socks</option>
+                                <option>Arms Sleves</option>
+                                <option>Underwears</option>
+                                <option>Wallet</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div class="pos-sales-summary">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span>Today Sales</span>
+                            <button type="button" id="pos-toggle-today-sales" title="Hide/Show Today Sales"
+                                style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 2px 4px; font-size: 0.8rem; border-radius: 4px; transition: color 0.2s;"
+                                onmouseover="this.style.color='var(--text-main)'"
+                                onmouseout="this.style.color='var(--text-muted)'">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <strong id="pos-today-sales">Rs. 0</strong>
+                    </div>
+                </header>
+
+                <div class="pos-layout" style="display: grid; grid-template-columns: 1.6fr 1fr; gap: 2rem;">
+                    <div class="product-grid" id="pos-product-grid" style="max-height: 70vh; overflow-y: auto;">
+                        <!-- Products -->
+                    </div>
+
+                    <div class="glass-card" style="padding: 1.25rem; display: flex; flex-direction: column; max-height: 70vh;">
+                        <h3
+                            style="margin-bottom: 1rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.5rem; font-family: 'Outfit';">
+                            Order Details</h3>
+                        <div id="cart-items"
+                            style="flex: 1; overflow-y: auto; min-height: 100px; margin-bottom: 1rem;">
+                            <!-- Cart -->
+                        </div>
+
+                        <div
+                            style="background: var(--bg-main); padding: 1rem; border-radius: 15px; border: 1px solid var(--glass-border);">
+                            <div class="total-row" style="margin-bottom: 0.25rem;">
+                                <span style="font-size: 0.9rem;">Subtotal</span>
+                                <span id="cart-subtotal" style="font-weight: 600;">Rs. 0</span>
+                            </div>
+                            <div class="total-row" id="discount-row"
+                                style="display: none; color: var(--accent-danger); margin-bottom: 0.25rem;">
+                                <span style="font-size: 0.9rem;">Discount</span>
+                                <span id="cart-discount" style="font-weight: 600;">-Rs. 0</span>
+                            </div>
+                            <div class="total-row grand-total"
+                                style="font-size: 1.25rem; margin: 0.5rem 0 1rem 0; color: var(--accent-primary); font-weight: 800;">
+                                <span>Total</span>
+                                <span id="cart-total">Rs. 0</span>
+                            </div>
+
+                            <div style="display: flex; gap: 0.75rem; margin-bottom: 1rem;">
+                                <button class="btn btn-ghost" id="add-discount-btn"
+                                    style="flex: 1; border: 1px solid var(--glass-border); color: var(--text-main); background: var(--bg-card); justify-content: center; padding: 0.5rem; font-size: 0.85rem;">
+                                    <i class="fas fa-tag" style="margin-right: 0.5rem;"></i> Discount
+                                </button>
+                            </div>
+
+                            <div id="cash-calculator" style="margin-bottom: 1rem;">
+                                <div class="form-group" style="margin-bottom: 0.5rem;">
+                                    <label style="font-size: 0.7rem;">Received Amount</label>
+                                    <input type="number" id="cash-received" placeholder="0"
+                                        style="font-size: 1.1rem; font-weight: 700; background: var(--bg-card); text-align: right; padding: 0.5rem 1rem;">
+                                </div>
+                                <div
+                                    style="display: flex; justify-content: space-between; align-items: center; padding: 0.25rem 0;">
+                                    <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">Change
+                                        to Return</span>
+                                    <span id="cash-balance"
+                                        style="font-size: 1.1rem; font-weight: 800; color: var(--accent-success);">Rs.
+                                        0</span>
+                                </div>
+                            </div>
+
+                            <button class="btn btn-primary" id="checkout-btn"
+                                style="width: 100%; height: 45px; justify-content: center; font-size: 1rem; border-radius: 12px;">
+                                <i class="fas fa-check-circle" style="margin-right: 0.5rem;"></i> Complete Sale
+                            </button>
+                            <button class="btn btn-ghost" id="pos-return-btn"
+                                style="width: 100%; height: 40px; justify-content: center; font-size: 0.9rem; border-radius: 12px; margin-top: 0.75rem; border: 1px dashed rgba(239, 68, 68, 0.25); color: var(--accent-danger); background: rgba(239, 68, 68, 0.03); display: flex; align-items: center; gap: 0.5rem;"
+                                onmouseover="this.style.background='rgba(239, 68, 68, 0.1)'"
+                                onmouseout="this.style.background='rgba(239, 68, 68, 0.03)'">
+                                <i class="fas fa-undo"></i> Return Item / Order
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Receipts Page -->
+            <div id="receipts-page" class="page-content" style="display: none;">
+                <header class="page-header">
+                    <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                        <p style="color: var(--text-muted); font-size: 0.875rem;">Premium Management</p>
+                        <h1>Receipts Vault</h1>
+                    </div>
+                    <div style="display: flex; gap: 0.75rem; align-items: center;">
+                        <button class="btn btn-ghost" onclick="SupabaseManager.fetchFromSupabase(true, this)" style="border: 1px solid var(--glass-border); display: flex; align-items: center; gap: 0.5rem; height: 42px; font-size: 0.85rem; font-weight: 600; padding: 0 1rem; border-radius: 8px;">
+                            <i class="fas fa-cloud-download-alt"></i> Fetch Receipts
+                        </button>
+                        <button class="btn btn-ghost" onclick="SupabaseManager.syncWithSupabase(true, this)" style="border: 1px solid var(--glass-border); color: var(--accent-primary); display: flex; align-items: center; gap: 0.5rem; height: 42px; font-size: 0.85rem; font-weight: 600; padding: 0 1rem; border-radius: 8px;">
+                            <i class="fas fa-cloud-upload-alt"></i> Store Receipts
+                        </button>
+                        <div style="width: 250px;">
+                            <input type="search" id="receipts-search" placeholder="Search by Invoice # or Date..." style="background: var(--bg-card); margin: 0; height: 42px; font-size: 0.85rem; border-radius: 8px;">
+                        </div>
+                    </div>
+                </header>
+
+                <div class="glass-card" style="padding: 1.5rem;">
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Invoice #</th>
+                                    <th>Timestamp</th>
+                                    <th>Items Count</th>
+                                    <th>Total Amount</th>
+                                    <th>Payment Method</th>
+                                    <th style="text-align: right;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="receipts-list">
+                                <!-- Dynamic Content -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Page -->
+            <div id="settings-page" class="page-content" style="display: none;">
+                <header class="page-header">
+                    <h1>Settings</h1>
+                </header>
+
+                <div style="max-width: 600px;">
+                    <div class="glass-card" style="margin-bottom: 2rem;">
+                        <h3 style="margin-bottom: 1.5rem; font-family: 'Outfit';">Supabase Account Security</h3>
+                        
+                        <div style="margin-bottom: 2rem;">
+                            <label style="font-weight: 600; font-size: 0.8rem; text-transform: uppercase;">Active Session Email</label>
+                            <input type="text" id="settings-active-email" readonly style="background: rgba(255,255,255,0.02); color: var(--text-muted); cursor: not-allowed; border-style: dashed;" value="Loading...">
+                        </div>
+
+                        <form id="change-password-form">
+                            <div class="form-group">
+                                <label>Current Supabase Password</label>
+                                <input type="password" id="current-password" placeholder="Verify current password"
+                                    required>
+                            </div>
+                            <div class="form-group">
+                                <label>New Supabase Password</label>
+                                <input type="password" id="new-password" placeholder="Enter new password" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="margin-bottom: 1.5rem;">Update Password</button>
+                        </form>
+
+                        <div
+                            style="border-top: 1px solid var(--glass-border); padding-top: 1.5rem; margin-bottom: 1.5rem;">
+                            <h4 style="margin-bottom: 0.5rem; font-size: 0.9rem;">Cloud Password Recovery</h4>
+                            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">
+                                Lost your credentials? Click below to send a secure password reset link to your registered Gmail address.
+                            </p>
+                            <button type="button" class="btn btn-ghost" id="settings-reset-pwd-btn"
+                                style="border: 1px solid var(--glass-border); color: #8b5cf6;">
+                                <i class="fas fa-paper-plane" style="margin-right: 0.5rem;"></i> Send Reset Link
+                            </button>
+                        </div>
+
+                        <div style="border-top: 1px solid var(--glass-border); padding-top: 1.5rem;">
+                            <h4 style="margin-bottom: 0.5rem; font-size: 0.9rem;">Protected Business Pages</h4>
+                            <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.5;">
+                                <i class="fas fa-shield-halved" style="color: var(--accent-success); margin-right: 0.5rem;"></i>
+                                Sales, analytics, and ledger pages are protected under Supabase authentication. Accessing these pages will securely prompt for your active account password. No credentials are stored locally.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Store Catalog & Attribute Manager -->
+                    <div class="glass-card" style="margin-bottom: 2rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+                            <div>
+                                <h3 style="margin: 0; font-family: 'Outfit';">Store Catalog & Attribute Manager</h3>
+                                <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.25rem;">
+                                    Configure garment types, custom size charts (Tops, Jeans, Collar), and seasonal drops
+                                </p>
+                            </div>
+                            <span class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); font-size: 0.75rem; padding: 0.25rem 0.6rem; border-radius: 6px;">
+                                <i class="fas fa-tags"></i> Dynamic Presets
+                            </span>
+                        </div>
+                        <div id="attributes-manager-container">
+                            <!-- Populated dynamically by AttributesManager -->
+                        </div>
+                    </div>
+
+                    <div class="glass-card">
+                        <h3 style="margin-bottom: 1.5rem; font-family: 'Outfit';">System Information</h3>
+                        <div style="display: flex; flex-direction: column; gap: 1rem;">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-muted);">Version</span>
+                                <span style="font-weight: 600;">2.0.4 (Cloud Enabled)</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-muted);">Database</span>
+                                <span style="font-weight: 600;">Local + Supabase Cloud</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-muted);">Last Backup</span>
+                                <span style="font-weight: 600;" id="last-backup-stat">Today, 2:45 PM</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-card" style="margin-top: 2rem;">
+                        <h3 style="margin-bottom: 1rem; font-family: 'Outfit';">Cloud Synchronization</h3>
+                        <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 1.5rem; line-height: 1.6;">
+                            Use these actions to manually synchronize database states. If you are setting up this system on a **new laptop** or different browser, click <strong>Download from Cloud</strong> to load all active inventory data instantly.
+                        </p>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <button class="btn btn-ghost" onclick="SupabaseManager.fetchFromSupabase(true, this)"
+                                style="justify-content: center; border: 1px solid var(--glass-border); color: var(--accent-success); height: 45px; border-radius: 12px; font-weight: 600; transition: all 0.3s ease;">
+                                <i class="fas fa-cloud-download-alt" style="margin-right: 0.5rem;"></i> Download from Cloud
+                            </button>
+                            <button class="btn btn-ghost" onclick="SupabaseManager.syncWithSupabase(true, this)"
+                                style="justify-content: center; border: 1px solid var(--glass-border); color: var(--accent-primary); height: 45px; border-radius: 12px; font-weight: 600; transition: all 0.3s ease;">
+                                <i class="fas fa-cloud-upload-alt" style="margin-right: 0.5rem;"></i> Upload to Cloud
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="glass-card" style="margin-top: 2rem; border: 1px solid rgba(239, 68, 68, 0.25);">
+                        <h3 style="margin-bottom: 1rem; font-family: 'Outfit'; color: var(--accent-danger);">Danger Zone</h3>
+                        <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 1.5rem; line-height: 1.6;">
+                            Permanently clear all local sales transactions, invoices, and analytics data. This action cannot be undone.
+                        </p>
+                        <button class="btn btn-ghost" id="clear-sales-analytics-btn"
+                            style="justify-content: center; border: 1px solid rgba(239, 68, 68, 0.2); color: var(--accent-danger); height: 45px; border-radius: 12px; font-weight: 600; width: 100%; transition: all 0.3s ease;">
+                            <i class="fas fa-trash-alt" style="margin-right: 0.5rem;"></i> Clear Sales & Analytics
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Separated Modal Component Base -->
+    <div id="modals-container"></div>
+
+    <!-- Neutralino Native Desktop Lifecycle & Fullscreen Controller -->
+    <script src="js/neutralino.js"></script>
+    <script>
+        if (window.Neutralino && typeof window.NL_PORT !== 'undefined') {
+            try {
+                Neutralino.init();
+                Neutralino.events.on('windowClose', function() {
+                    Neutralino.app.exit();
+                });
+            } catch (e) {
+                console.warn('Neutralino init note:', e);
+            }
+        }
+
+        window.toggleFullScreen = async function() {
+            try {
+                if (window.Neutralino && typeof window.NL_PORT !== 'undefined') {
+                    const isFull = await Neutralino.window.isFullScreen();
+                    if (isFull) {
+                        await Neutralino.window.exitFullScreen();
+                        updateFullScreenIcons(false);
+                    } else {
+                        await Neutralino.window.setFullScreen();
+                        updateFullScreenIcons(true);
+                    }
+                    return;
+                }
+            } catch (err) {
+                console.warn('Neutralino fullscreen call note:', err);
+            }
+
+            // Web browser fullscreen fallback
+            try {
+                if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                    if (document.documentElement.requestFullscreen) {
+                        await document.documentElement.requestFullscreen();
+                    } else if (document.documentElement.webkitRequestFullscreen) {
+                        await document.documentElement.webkitRequestFullscreen();
+                    }
+                    updateFullScreenIcons(true);
+                } else {
+                    if (document.exitFullscreen) {
+                        await document.exitFullscreen();
+                    } else if (document.webkitExitFullscreen) {
+                        await document.webkitExitFullscreen();
+                    }
+                    updateFullScreenIcons(false);
+                }
+            } catch (e) {
+                console.warn('Browser fullscreen error:', e);
+            }
+        };
+
+        function updateFullScreenIcons(isFull) {
+            document.querySelectorAll('.fullscreen-toggle-icon').forEach(function(icon) {
+                icon.className = isFull ? 'fas fa-compress fullscreen-toggle-icon' : 'fas fa-expand fullscreen-toggle-icon';
+            });
+            document.querySelectorAll('.fullscreen-toggle-btn').forEach(function(btn) {
+                btn.title = isFull ? 'Exit Fullscreen (F11 / Esc)' : 'Enter Fullscreen (F11)';
+            });
+        }
+
+        // Global F11 and Escape keyboard listener
+        window.addEventListener('keydown', function(e) {
+            if (e.key === 'F11') {
+                e.preventDefault();
+                window.toggleFullScreen();
+            } else if (e.key === 'Escape') {
+                if (window.Neutralino && typeof window.NL_PORT !== 'undefined') {
+                    Neutralino.window.isFullScreen().then(function(isFull) {
+                        if (isFull) {
+                            Neutralino.window.exitFullScreen();
+                            updateFullScreenIcons(false);
+                        }
+                    }).catch(function() {});
+                } else if (document.fullscreenElement || document.webkitFullscreenElement) {
+                    if (document.exitFullscreen) document.exitFullscreen().catch(function() {});
+                    updateFullScreenIcons(false);
+                }
+            }
+        });
+
+        document.addEventListener('fullscreenchange', function() {
+            updateFullScreenIcons(Boolean(document.fullscreenElement));
+        });
+        document.addEventListener('webkitfullscreenchange', function() {
+            updateFullScreenIcons(Boolean(document.webkitFullscreenElement));
+        });
+    </script>
+
+    <script src="js/supabase-client.min.js"></script>
+    <script src="js/store.js?v=32"></script>
+    <script src="js/supabase.js?v=33"></script>
+    <script src="js/website-sync.js?v=1"></script>
+    <script src="js/order-audio.js?v=1"></script>
+    <script src="js/notifications.js?v=2"></script>
+    <script src="js/components/modals.js?v=37"></script>
+    <script src="js/ui.js?v=33"></script>
+    <script src="js/dashboard.js?v=22"></script>
+    <script src="js/analytics.js?v=22"></script>
+    <script src="js/apple-picker.js?v=24"></script>
+    <script src="js/ledger.js?v=33"></script>
+    <script src="js/webtrack.js?v=23"></script>
+    <script src="js/website.js?v=40"></script>
+    <script src="js/inventory.js?v=33"></script>
+    <script src="js/wintercollection.js?v=23"></script>
+    <script src="js/accessories.js?v=23"></script>
+    <script src="js/pos.js?v=34"></script>
+    <script src="js/receipts.js?v=23"></script>
+    <script src="js/backup.js?v=22"></script>
+    <script src="js/attributes.js?v=32"></script>
+    <script src="js/app.js?v=23"></script>
+
+    <script>
+        // Dynamic size options based on article type and store attributes
+        function updateSizeOptions(selectId, articleType, currentValue) {
+            const sizeSelect = document.getElementById(selectId);
+            if (!sizeSelect) return;
+
+            let options = [];
+            const attrs = (window.Store && Store.getAttributes) ? Store.getAttributes() : null;
+            const sizes = attrs ? attrs.sizes : null;
+
+            if (articleType === 'Dress Shirt') {
+                options = (sizes && sizes.dressShirt) ? [...sizes.dressShirt] : ['14', '14.5', '15', '15.5', '16', '16.5', '17', '17.5'];
+            } else if (articleType === 'Jeans') {
+                options = (sizes && sizes.jeans) ? [...sizes.jeans] : ['26', '28', '30', '32', '34', '36', '38', '40', '42'];
+            } else if (attrs && attrs.accessoryTypes && attrs.accessoryTypes.some(t => t.toLowerCase() === (articleType || '').toLowerCase())) {
+                options = (sizes && sizes.accessories) ? [...sizes.accessories] : ['N/A', 'FREE', 'S', 'M', 'L'];
+            } else {
+                options = (sizes && sizes.clothing) ? [...sizes.clothing] : ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL', 'FREE'];
+            }
+
+            // If current value is not in options, append it so it's not lost
+            if (currentValue && !options.includes(currentValue) && currentValue !== '__custom__') {
+                options.push(currentValue);
+            }
+
+            let html = options.map(o =>
+                `<option value="${o}" ${currentValue === o ? 'selected' : ''}>${o}</option>`
+            ).join('');
+
+            html += `<option value="__custom__" style="color: #38bdf8; font-weight: 700;">➕ + Custom Size...</option>`;
+
+            sizeSelect.innerHTML = html;
+
+            if (!sizeSelect._hasCustomListener) {
+                sizeSelect._hasCustomListener = true;
+                sizeSelect.addEventListener('change', function() {
+                    if (this.value === '__custom__') {
+                        const newSize = prompt('Enter custom size (e.g. 3XL, 4XL, 26 Waist, 42, etc.):');
+                        if (newSize && newSize.trim()) {
+                            const clean = newSize.trim().toUpperCase();
+                            const catKey = (articleType === 'Jeans') ? 'jeans' : (articleType === 'Dress Shirt' ? 'dressShirt' : 'clothing');
+                            if (window.Store && Store.addCustomSize) {
+                                Store.addCustomSize(catKey, clean);
+                            }
+                            const opt = document.createElement('option');
+                            opt.value = clean;
+                            opt.textContent = clean;
+                            opt.selected = true;
+                            this.insertBefore(opt, this.lastElementChild);
+                            this.value = clean;
+                        } else {
+                            this.selectedIndex = 0;
+                        }
+                    }
+                });
+            }
+        }
+
+        // When edit modal opens, sync the size dropdown to the existing article type
+        document.addEventListener('DOMContentLoaded', () => {
+            // Diagnostics
+            const updateDiag = () => {
+                try {
+                    const data = JSON.parse(localStorage.getItem('zyro_data')) || {};
+                    const prodCount = (data.inventory || []).length;
+                    const accCount = (data.accessories || []).length;
+                    
+                    const prodEl = document.getElementById('diag-prod-count');
+                    const accEl = document.getElementById('diag-acc-count');
+                    if (prodEl) prodEl.textContent = prodCount;
+                    if (accEl) accEl.textContent = accCount;
+                    
+                    console.log(`Diagnostics: ${prodCount} products, ${accCount} accessories`);
+                } catch (e) {
+                    console.error('Diag Error:', e);
+                }
+            };
+            
+            updateDiag();
+            window.addEventListener('inventoryUpdate', updateDiag);
+
+            const editTypeSelect = document.getElementById('edit-article-type');
+            if (editTypeSelect) {
+                // Trigger size update whenever edit modal becomes visible
+                const editModal = document.getElementById('edit-product-modal');
+                if (editModal) {
+                    const observer = new MutationObserver(() => {
+                        if (editModal.classList.contains('active')) {
+                            const currentSize = document.querySelector('#edit-product-form [name="size"]')?.value;
+                            updateSizeOptions('edit-size-select', editTypeSelect.value, currentSize);
+                        }
+                    });
+                    observer.observe(editModal, { attributes: true, attributeFilter: ['class'] });
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

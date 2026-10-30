@@ -1,0 +1,13 @@
+﻿{
+  "name": "zyro-retail-pos",
+  "version": "1.0.0",
+  "description": "ZYRO Premium Retail POS - Lightweight Desktop Edition",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx @neutralinojs/neu run",
+    "build": "powershell -ExecutionPolicy Bypass -File ./build-lightweight.ps1"
+  },
+  "devDependencies": {
+    "@neutralinojs/neu": "^11.3.0"
+  }
+}

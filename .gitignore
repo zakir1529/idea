@@ -1,0 +1,17 @@
+﻿# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+dist-lightweight/
+resources/
+.zyro-build-cache/
+
+# Neutralino storage & temp
+.tmp/
+storage/
+neutralino.log
+
+# System & editor files
+*.lnk
+.agents/
